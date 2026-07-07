@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#07070a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="color-scheme" content="dark">
+<title>Geschirrspülerliste</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#07070a;
+    --surface:#131319;
+    --surface-2:#1a1a22;
+    --border:rgba(255,255,255,.08);
+    --text:#f5f5fa;
+    --text-dim:#9898ab;
+    --text-faint:#5f5f72;
+    --pink:#ff2e93;
+    --pink-soft:#ff7ac0;
+    --violet:#8b6cff;
+    --blue:#ff3de2;
+    --orange:#fda0ec;
+    --lena-grad: linear-gradient(135deg, var(--blue), var(--violet));
+    --jojo-grad: linear-gradient(135deg, var(--pink), var(--orange));
+    --rainbow-grad: linear-gradient(90deg, var(--blue), var(--pink), var(--orange), var(--blue));
+    --radius-lg: 26px;
+    --radius-md: 20px;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Inter', system-ui, sans-serif;
+    min-height:100dvh;
+    overflow-x:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3{font-family:'Outfit', system-ui, sans-serif; margin:0;}
+  button{font-family:inherit;}
+
+  ::selection{background:var(--pink); color:#fff;}
+
+  button:focus-visible, .count:focus-visible{
+    outline:2px solid var(--pink-soft);
+    outline-offset:3px;
+    border-radius:8px;
+  }
+
+  /* ---------- Loading ---------- */
+  #loading{
+    position:fixed; inset:0; background:var(--bg);
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:16px;
+    z-index:300; transition:opacity .4s ease, visibility .4s ease;
+  }
+  #loading.hidden{opacity:0; visibility:hidden; pointer-events:none;}
+  .spinner{
+    width:44px; height:44px; border-radius:50%;
+    background:conic-gradient(var(--blue), var(--violet), var(--pink), var(--orange), var(--blue));
+    animation:rotate 1s linear infinite;
+    -webkit-mask:radial-gradient(farthest-side, transparent calc(100% - 5px), #000 calc(100% - 5px));
+            mask:radial-gradient(farthest-side, transparent calc(100% - 5px), #000 calc(100% - 5px));
+  }
+  #loading p{color:var(--text-dim); font-size:.9rem;}
+
+  /* ---------- Layout ---------- */
+  .app{max-width:900px; margin:0 auto; padding:0 20px 60px;}
+
+  .topbar{
+    position:sticky; top:0; z-index:80;
+    background:rgba(7,7,10,.75);
+    backdrop-filter:blur(12px);
+    -webkit-backdrop-filter:blur(12px);
+    border-bottom:1px solid var(--border);
+    padding:calc(16px + env(safe-area-inset-top)) 20px 16px;
+    display:flex; align-items:center; gap:10px;
+  }
+  .topbar .icon{font-size:1.4rem;}
+  .topbar h1{
+    font-weight:800;
+    font-size:clamp(1.3rem, 4.2vw, 1.8rem);
+    letter-spacing:-0.01em;
+    background:var(--rainbow-grad);
+    background-size:220% auto;
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+    animation:shimmer 6s linear infinite;
+    filter:drop-shadow(0 0 18px rgba(255,46,147,.25));
+  }
+  @keyframes shimmer{ 0%{background-position:0% center;} 100%{background-position:220% center;} }
+
+  /* ---------- Hero ---------- */
+  .hero{
+    position:relative; overflow:hidden;
+    margin-top:24px;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--radius-lg);
+    padding:30px 26px;
+    text-align:center;
+    animation:fadeUp .5s ease both;
+  }
+  .hero::before{
+    content:''; position:absolute; width:360px; height:360px; left:-100px; top:-140px;
+    background:conic-gradient(from 0deg, var(--blue), var(--violet), var(--pink), var(--orange), var(--blue));
+    filter:blur(80px); opacity:.28; animation:rotate 18s linear infinite; z-index:0;
+  }
+  .hero > *{position:relative; z-index:1;}
+  .eyebrow{
+    text-transform:uppercase; letter-spacing:.12em; font-size:.75rem;
+    color:var(--text-dim); font-weight:600;
+  }
+  .due-name{
+    font-weight:800; line-height:1;
+    font-size:clamp(2.1rem, 9vw, 3.1rem);
+    margin:10px 0 6px;
+  }
+  .due-name.lena{ background:var(--lena-grad); -webkit-background-clip:text; background-clip:text; color:transparent; filter:drop-shadow(0 0 24px rgba(61,139,255,.4)); }
+  .due-name.jojo{ background:var(--jojo-grad); -webkit-background-clip:text; background-clip:text; color:transparent; filter:drop-shadow(0 0 24px rgba(255,46,147,.4)); }
+  .due-name.tie{ background:var(--rainbow-grad); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .hero-sub{color:var(--text-dim); font-size:.92rem;}
+
+  .battle-bar-wrap{margin-top:22px;}
+  .battle-names{
+    display:flex; justify-content:space-between; margin-bottom:7px;
+    font-weight:700; font-size:.85rem; color:var(--text-dim);
+  }
+  .battle-names span b{color:var(--text); font-weight:800;}
+  .battle-bar{
+    height:14px; border-radius:999px; overflow:hidden;
+    background:var(--surface-2); display:flex; border:1px solid var(--border);
+  }
+  .bar-fill{height:100%; transition:width .6s cubic-bezier(.2,.8,.2,1);}
+  .bar-fill.lena{background:var(--lena-grad);}
+  .bar-fill.jojo{background:var(--jojo-grad);}
+
+  /* ---------- Score cards ---------- */
+  .score-grid{
+    display:grid; grid-template-columns:1fr; gap:16px; margin-top:20px;
+  }
+  @media (min-width:680px){ .score-grid{grid-template-columns:1fr 1fr;} }
+
+  .score-card{
+    position:relative; overflow:hidden;
+    background:var(--surface);
+    border-radius:var(--radius-md);
+    padding:24px 20px 22px;
+    text-align:center;
+    border:1px solid transparent;
+    background-image:linear-gradient(var(--surface), var(--surface)), var(--lena-grad);
+    background-origin:border-box;
+    background-clip:padding-box, border-box;
+    animation:fadeUp .5s ease both;
+  }
+  .score-card.jojo{ background-image:linear-gradient(var(--surface), var(--surface)), var(--jojo-grad); }
+  .score-card:nth-of-type(2){animation-delay:.08s;}
+
+  .score-card.punch{animation:punch .35s ease;}
+
+  .avatar{
+    width:46px; height:46px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-weight:800; color:#fff; margin:0 auto 10px; font-size:1.1rem;
+  }
+  .score-card.lena .avatar{background:var(--lena-grad); box-shadow:0 8px 20px rgba(61,139,255,.4);}
+  .score-card.jojo .avatar{background:var(--jojo-grad); box-shadow:0 8px 20px rgba(255,46,147,.4);}
+
+  .score-card .name{font-weight:700; font-size:1.05rem; letter-spacing:.01em;}
+
+  .count{
+    display:inline-block; position:relative;
+    font-weight:800; line-height:1; margin:10px 0 4px;
+    font-size:clamp(3rem, 13vw, 4.2rem);
+    cursor:pointer; user-select:none; -webkit-user-select:none; touch-action:manipulation;
+    transition:transform .15s ease, filter .15s ease;
+  }
+  .score-card.lena .count{background:var(--lena-grad); -webkit-background-clip:text; background-clip:text; color:transparent;}
+  .score-card.jojo .count{background:var(--jojo-grad); -webkit-background-clip:text; background-clip:text; color:transparent;}
+  .count.holding{transform:scale(.9); filter:brightness(1.5) saturate(1.4);}
+
+  .float-plus, .float-minus{
+    position:absolute; top:0; left:50%; transform:translate(-50%,0);
+    font-weight:800; font-size:1.15rem; pointer-events:none;
+    animation:floatUp .9s ease-out forwards;
+  }
+  .float-plus{color:var(--pink-soft);}
+  .float-minus{color:#ff6b6b;}
+
+  .bump-btn{
+    width:100%; margin-top:12px; padding:15px; border:none; border-radius:999px;
+    font-weight:700; font-size:1rem; color:#fff; cursor:pointer;
+    transition:transform .15s ease, box-shadow .15s ease;
+  }
+  .bump-btn:active{transform:scale(.96);}
+  .score-card.lena .bump-btn{background:var(--lena-grad); box-shadow:0 10px 26px rgba(61,139,255,.35);}
+  .score-card.jojo .bump-btn{background:var(--jojo-grad); box-shadow:0 10px 26px rgba(255,46,147,.35);}
+
+  /* ---------- Actions ---------- */
+  .actions{display:flex; gap:14px; margin-top:22px; flex-wrap:wrap;}
+  .action-btn{
+    flex:1 1 200px; padding:16px; border-radius:999px; cursor:pointer;
+    font-weight:700; font-size:.98rem;
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    transition:transform .15s ease, box-shadow .15s ease;
+    border:1px solid var(--border); background:var(--surface-2); color:var(--text);
+  }
+  .action-btn:hover{transform:translateY(-2px);}
+  .action-btn:active{transform:translateY(0) scale(.98);}
+  .action-btn.pink{
+    background:linear-gradient(135deg, var(--pink), var(--pink-soft));
+    border:none; color:#fff;
+    box-shadow:0 12px 30px rgba(255,46,147,.35);
+  }
+
+  /* ---------- Footer ---------- */
+  footer{
+    margin-top:34px; text-align:center; color:var(--text-faint); font-size:.8rem;
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    padding-bottom:env(safe-area-inset-bottom);
+  }
+  .save-dot{width:7px; height:7px; border-radius:50%; background:var(--text-faint);}
+  .save-dot.ok{background:#3ddc84; animation:dotPulse .6s ease;}
+  .save-dot.err{background:#ff5c5c; animation:dotPulse .6s ease;}
+
+  /* ---------- Oracle overlay ---------- */
+  .oracle-overlay{
+    position:fixed; inset:0; z-index:200;
+    background:rgba(4,4,8,.8); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
+    display:flex; align-items:center; justify-content:center; padding:20px;
+    opacity:0; pointer-events:none; transition:opacity .25s ease;
+  }
+  .oracle-overlay.open{opacity:1; pointer-events:auto;}
+  .oracle-card{
+    position:relative; overflow:hidden;
+    background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-lg);
+    padding:44px 28px 32px; max-width:380px; width:100%; text-align:center;
+  }
+  .oracle-close{
+    position:absolute; top:14px; right:14px; width:32px; height:32px; border-radius:50%;
+    border:1px solid var(--border); background:var(--surface-2); color:var(--text-dim);
+    cursor:pointer; font-size:1rem; line-height:1;
+  }
+  .oracle-status{font-size:.85rem; letter-spacing:.08em; text-transform:uppercase; color:var(--text-dim);}
+  .oracle-status.hidden{display:none;}
+  .oracle-result{
+    font-weight:800; font-size:clamp(1.6rem, 7vw, 2.2rem); margin-top:8px;
+    opacity:0; transform:translateY(6px);
+    transition:opacity .35s ease, transform .35s ease;
+    background:var(--rainbow-grad); -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  .oracle-result.show{opacity:1; transform:translateY(0);}
+  .oracle-confetti{position:absolute; inset:0; pointer-events:none;}
+  .confetti-piece{position:absolute; top:30%; width:8px; height:8px; border-radius:2px; animation:confettiFall 1.1s ease-in forwards;}
+
+  /* ---------- Quote toast ---------- */
+  .quote-toast{
+    position:fixed; left:50%; bottom:24px; transform:translate(-50%,140%);
+    width:min(92vw,420px); z-index:150;
+    background:var(--surface-2); border:1px solid var(--border); border-left:4px solid var(--pink);
+    border-radius:16px; padding:16px 16px 16px 18px;
+    display:flex; gap:10px; align-items:flex-start;
+    box-shadow:0 20px 50px rgba(0,0,0,.5);
+    transition:transform .35s cubic-bezier(.2,.9,.3,1.2);
+    padding-bottom:calc(16px + env(safe-area-inset-bottom));
+  }
+  .quote-toast.show{transform:translate(-50%,0);}
+  .quote-toast p{margin:0; font-size:.92rem; line-height:1.4;}
+  .quote-close{
+    background:none; border:none; color:var(--text-faint); cursor:pointer; font-size:1.1rem;
+    line-height:1; padding:0 2px;
+  }
+
+  /* ---------- Keyframes ---------- */
+  @keyframes rotate{ to{ transform:rotate(360deg); } }
+  @keyframes fadeUp{ from{ opacity:0; transform:translateY(14px); } to{ opacity:1; transform:translateY(0); } }
+  @keyframes punch{ 0%{transform:scale(1);} 30%{transform:scale(1.025);} 100%{transform:scale(1);} }
+  @keyframes floatUp{ 0%{opacity:1; transform:translate(-50%,0) scale(1);} 100%{opacity:0; transform:translate(-50%,-42px) scale(1.25);} }
+  @keyframes dotPulse{ 0%{box-shadow:0 0 0 0 currentColor;} 100%{box-shadow:0 0 0 9px transparent;} }
+  @keyframes confettiFall{ 0%{transform:translate(0,0) rotate(0deg); opacity:1;} 100%{transform:translate(var(--drift,0px),150px) rotate(240deg); opacity:0;} }
+
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:.001ms !important; animation-iteration-count:1 !important; transition-duration:.001ms !important;}
+  }
+</style>
+</head>
+<body>
+
+  <div id="loading">
+    <div class="spinner"></div>
+    <p>Spielstand wird geladen …</p>
+  </div>
+
+  <div class="app">
+    <header class="topbar">
+      <span class="icon">🍽️</span>
+      <h1>Geschirrspülerliste</h1>
+    </header>
+
+    <main>
+      <!-- Hero: wer ist dran -->
+      <section class="hero">
+        <div class="eyebrow">Aktuell dran</div>
+        <div class="due-name tie" id="hero-name">Unentschieden</div>
+        <div class="hero-sub" id="hero-sub">Beide gleich oft dran gewesen</div>
+
+        <div class="battle-bar-wrap">
+          <div class="battle-names">
+            <span>Lena <b id="bar-label-lena">0</b></span>
+            <span>Jojo <b id="bar-label-jojo">0</b></span>
+          </div>
+          <div class="battle-bar">
+            <div class="bar-fill lena" id="bar-lena" style="width:50%"></div>
+            <div class="bar-fill jojo" id="bar-jojo" style="width:50%"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Score cards -->
+      <section class="score-grid">
+        <div class="score-card lena" id="lena-card">
+          <div class="avatar">L</div>
+          <div class="name">Lena</div>
+          <div class="count" id="lena-count">0</div>
+          <button class="bump-btn" id="bump-lena">🍽️ +1 für Lena</button>
+        </div>
+        <div class="score-card jojo" id="jojo-card">
+          <div class="avatar">J</div>
+          <div class="name">Jojo</div>
+          <div class="count" id="jojo-count">0</div>
+          <button class="bump-btn" id="bump-jojo">🍽️ +1 für Jojo</button>
+        </div>
+      </section>
+
+      <!-- Actions -->
+      <section class="actions">
+        <button class="action-btn pink" id="oracle-btn">🔮 Schicksal befragen</button>
+        <button class="action-btn" id="motivate-btn">✨ Motivation</button>
+      </section>
+    </main>
+
+    <footer>
+      <span class="save-dot" id="save-dot"></span>
+      <span>Euer Punktestand wird automatisch gespeichert</span>
+    </footer>
+  </div>
+
+  <!-- Oracle overlay -->
+  <div class="oracle-overlay" id="oracle-overlay">
+    <div class="oracle-card">
+      <button class="oracle-close" id="oracle-close" aria-label="Schließen">✕</button>
+      <div class="oracle-status" id="oracle-status">Stricherl werden gezählt …</div>
+      <div class="oracle-result" id="oracle-result"></div>
+      <div class="oracle-confetti" id="oracle-confetti"></div>
+    </div>
+  </div>
+
+  <!-- Quote toast -->
+  <div class="quote-toast" id="quote-toast">
+    <p id="quote-text"></p>
+    <button class="quote-close" id="quote-close" aria-label="Schließen">✕</button>
+  </div>
+
+<script>
+(function(){
+  const STORAGE_KEY = 'dishwasher_tally_v1';
+  const state = { lena:0, jojo:0 };
+
+  const els = {
+    loading: document.getElementById('loading'),
+    lenaCount: document.getElementById('lena-count'),
+    jojoCount: document.getElementById('jojo-count'),
+    lenaCard: document.getElementById('lena-card'),
+    jojoCard: document.getElementById('jojo-card'),
+    heroName: document.getElementById('hero-name'),
+    heroSub: document.getElementById('hero-sub'),
+    barLena: document.getElementById('bar-lena'),
+    barJojo: document.getElementById('bar-jojo'),
+    barLabelLena: document.getElementById('bar-label-lena'),
+    barLabelJojo: document.getElementById('bar-label-jojo'),
+    saveDot: document.getElementById('save-dot'),
+    oracleOverlay: document.getElementById('oracle-overlay'),
+    oracleStatus: document.getElementById('oracle-status'),
+    oracleResult: document.getElementById('oracle-result'),
+    oracleConfetti: document.getElementById('oracle-confetti'),
+    quoteToast: document.getElementById('quote-toast'),
+    quoteText: document.getElementById('quote-text'),
+  };
+
+  /* ---------- Storage ---------- */
+  async function loadState(){
+    try{
+      const res = await window.storage.get(STORAGE_KEY, true);
+      if(res && res.value){
+        const parsed = JSON.parse(res.value);
+        state.lena = Number(parsed.lena) || 0;
+        state.jojo = Number(parsed.jojo) || 0;
+      }
+    }catch(e){
+      // Kein Spielstand vorhanden -> erster Start, bei 0 : 0 beginnen
+    }
+    renderAll();
+    els.loading.classList.add('hidden');
+  }
+
+  async function saveState(){
+    try{
+      await window.storage.set(STORAGE_KEY, JSON.stringify({
+        lena: state.lena, jojo: state.jojo, updatedAt: Date.now()
+      }), true);
+      pulseSaved(true);
+    }catch(e){
+      pulseSaved(false);
+    }
+  }
+
+  function pulseSaved(ok){
+    els.saveDot.classList.remove('ok','err');
+    void els.saveDot.offsetWidth;
+    els.saveDot.classList.add(ok ? 'ok' : 'err');
+  }
+
+  /* ---------- Render ---------- */
+  function renderAll(){
+    els.lenaCount.textContent = state.lena;
+    els.jojoCount.textContent = state.jojo;
+    els.barLabelLena.textContent = state.lena;
+    els.barLabelJojo.textContent = state.jojo;
+
+    const total = state.lena + state.jojo;
+    const lenaPct = total === 0 ? 50 : Math.round((state.lena/total)*100);
+    els.barLena.style.width = lenaPct + '%';
+    els.barJojo.style.width = (100-lenaPct) + '%';
+
+    if(state.lena === state.jojo){
+      els.heroName.textContent = 'Unentschieden';
+      els.heroName.className = 'due-name tie';
+      els.heroSub.textContent = 'Beide gleich oft dran gewesen – wer zuerst spült, sichert sich Pluspunkte 😉';
+    } else {
+      const dueLena = state.lena < state.jojo;
+      els.heroName.textContent = dueLena ? 'Lena' : 'Jojo';
+      els.heroName.className = 'due-name ' + (dueLena ? 'lena' : 'jojo');
+      const diff = Math.abs(state.lena - state.jojo);
+      els.heroSub.textContent = `${diff}× weniger ausgeräumt`;
+    }
+  }
+
+  /* ---------- Zähler erhöhen / verringern ---------- */
+  function bump(user){
+    state[user]++;
+    renderAll();
+    saveState();
+    floatText(user, '+1', 'float-plus');
+    punch(user);
+  }
+
+  function decrement(user){
+    if(state[user] <= 0) return;
+    state[user]--;
+    renderAll();
+    saveState();
+    floatText(user, '−1', 'float-minus');
+  }
+
+  function floatText(user, text, cls){
+    const card = user === 'lena' ? els.lenaCard : els.jojoCard;
+    const span = document.createElement('span');
+    span.className = cls;
+    span.textContent = text;
+    span.style.left = (42 + Math.random()*16) + '%';
+    card.appendChild(span);
+    setTimeout(()=> span.remove(), 900);
+  }
+
+  function punch(user){
+    const card = user === 'lena' ? els.lenaCard : els.jojoCard;
+    card.classList.remove('punch');
+    void card.offsetWidth;
+    card.classList.add('punch');
+  }
+
+  /* ---------- Langes Drücken zum Korrigieren (dezent versteckt) ---------- */
+  function bindLongPress(el, user){
+    let timer = null;
+    const start = ()=>{
+      el.classList.add('holding');
+      timer = setTimeout(()=>{
+        decrement(user);
+        el.classList.remove('holding');
+        if(navigator.vibrate) navigator.vibrate(25);
+      }, 600);
+    };
+    const cancel = ()=>{
+      clearTimeout(timer);
+      el.classList.remove('holding');
+    };
+    el.addEventListener('pointerdown', start);
+    el.addEventListener('pointerup', cancel);
+    el.addEventListener('pointerleave', cancel);
+    el.addEventListener('pointercancel', cancel);
+    el.addEventListener('contextmenu', e => e.preventDefault());
+  }
+
+  /* ---------- Orakel ---------- */
+  const oracleMessages = ['Stricherl werden gezählt …','Fairness wird berechnet …','Schicksal wird befragt …','Ergebnis wird versiegelt …'];
+  let oracleInterval = null;
+
+  function runOracle(){
+    els.oracleOverlay.classList.add('open');
+    els.oracleResult.classList.remove('show');
+    els.oracleResult.textContent = '';
+    els.oracleConfetti.innerHTML = '';
+    els.oracleStatus.classList.remove('hidden');
+
+    let i = 0;
+    els.oracleStatus.textContent = oracleMessages[0];
+    clearInterval(oracleInterval);
+    oracleInterval = setInterval(()=>{
+      i = (i+1) % oracleMessages.length;
+      els.oracleStatus.textContent = oracleMessages[i];
+    }, 380);
+
+    setTimeout(()=>{
+      clearInterval(oracleInterval);
+      els.oracleStatus.classList.add('hidden');
+      let result;
+      if(state.lena === state.jojo){
+        result = 'Unentschieden – beide sind dran! 😄';
+      } else {
+        result = (state.lena < state.jojo ? '🍽️ Lena ist dran!' : '🍽️ Jojo ist dran!');
+      }
+      els.oracleResult.textContent = result;
+      els.oracleResult.classList.add('show');
+      spawnConfetti();
+    }, 1700);
+  }
+
+  function closeOracle(){
+    els.oracleOverlay.classList.remove('open');
+    clearInterval(oracleInterval);
+  }
+
+  function spawnConfetti(){
+    const colors = ['#3D8BFF','#8B6CFF','#FF2E93','#FFA14A','#FF7AC0'];
+    for(let n=0; n<26; n++){
+      const dot = document.createElement('span');
+      dot.className = 'confetti-piece';
+      dot.style.left = Math.random()*100 + '%';
+      dot.style.background = colors[Math.floor(Math.random()*colors.length)];
+      dot.style.animationDelay = (Math.random()*0.3) + 's';
+      dot.style.setProperty('--drift', (Math.random()*80-40) + 'px');
+      els.oracleConfetti.appendChild(dot);
+    }
+  }
+
+  /* ---------- Motivation ---------- */
+  const quotesList = [
+    'Ein sauberes Geschirrtuch ist die halbe Miete – ab an die Spüle! 🧽',
+    'Teller stapeln sich nicht von selbst weg … oh warte, doch. Also los! 🍽️',
+    'Du schaffst das! Danach schmeckt der Kaffee gleich besser ☕✨',
+    'Stell dir vor, wie stolz dein Ich von morgen sein wird 💪',
+    'Fünf Minuten Einsatz für pures Küchenglück 😌',
+    'Ruhm, Ehre und ein aufgeräumter Geschirrspüler warten auf dich 🏆',
+    'Ausräumen ist wie Meditation, nur mit Besteck 🧘‍♀️🍴',
+    'Los geht’s – die Gabeln vermissen ihre Schublade! 🍴'
+  ];
+  let quoteTimer = null;
+
+  function showQuote(){
+    const q = quotesList[Math.floor(Math.random()*quotesList.length)];
+    els.quoteText.textContent = q;
+    els.quoteToast.classList.add('show');
+    clearTimeout(quoteTimer);
+    quoteTimer = setTimeout(()=> els.quoteToast.classList.remove('show'), 6000);
+  }
+  function hideQuote(){
+    clearTimeout(quoteTimer);
+    els.quoteToast.classList.remove('show');
+  }
+
+  /* ---------- Events ---------- */
+  document.getElementById('bump-lena').addEventListener('click', ()=>bump('lena'));
+  document.getElementById('bump-jojo').addEventListener('click', ()=>bump('jojo'));
+  bindLongPress(els.lenaCount, 'lena');
+  bindLongPress(els.jojoCount, 'jojo');
+  document.getElementById('oracle-btn').addEventListener('click', runOracle);
+  document.getElementById('oracle-close').addEventListener('click', closeOracle);
+  els.oracleOverlay.addEventListener('click', (e)=>{ if(e.target === els.oracleOverlay) closeOracle(); });
+  document.getElementById('motivate-btn').addEventListener('click', showQuote);
+  document.getElementById('quote-close').addEventListener('click', hideQuote);
+
+  loadState();
+})();
+</script>
+</body>
+</html>
