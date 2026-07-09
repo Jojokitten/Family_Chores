@@ -8,8 +8,8 @@
     --text-faint:#5f5f72;
     --pink:#ff2e93;
     --pink-soft:#ff7ac0;
-    --violet:#8b6cff;
-    --blue:#ff3de2;
+    --violet:#c96cff;
+    --blue:#3dc8ff;
     --orange:#fda0ec;
     --lena-grad: linear-gradient(135deg, var(--blue), var(--violet));
     --jojo-grad: linear-gradient(135deg, var(--pink), var(--orange));
