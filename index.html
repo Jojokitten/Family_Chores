@@ -6,36 +6,32 @@
 <meta name="theme-color" content="#07070a">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="color-scheme" content="dark">
-<title>Geschirrspülerliste</title>
+<title>Familien-Chores</title>
 <link rel="stylesheet" href="style.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-
 </head>
 <body>
-
-
   <div id="loading">
     <div class="spinner"></div>
-    <p>Spielstand wird geladen …</p>
+    <p>Spielstand wird geladen ...</p>
   </div>
-
 
   <div class="app">
     <header class="topbar">
-      <span class="icon">🍽️</span>
-      <h1>Geschirrspülerliste</h1>
+      <span class="icon" aria-hidden="true">🍽️</span>
+      <div>
+        <p>Family Chores</p>
+        <h1>Geschirr & K&uuml;che</h1>
+      </div>
     </header>
 
-
     <main>
-      <!-- Hero: wer ist dran -->
       <section class="hero">
         <div class="eyebrow">Aktuell dran</div>
         <div class="due-name tie" id="hero-name">Unentschieden</div>
         <div class="hero-sub" id="hero-sub">Beide gleich oft dran gewesen</div>
-
 
         <div class="battle-bar-wrap">
           <div class="battle-names">
@@ -49,31 +45,81 @@
         </div>
       </section>
 
-
-      <!-- Score cards -->
       <section class="score-grid">
         <div class="score-card lena" id="lena-card">
           <div class="avatar">L</div>
           <div class="name">Lena</div>
-          <div class="count" id="lena-count">0</div>
-          <button class="bump-btn" id="bump-lena">🍽️ +1 für Lena</button>
+          <div class="count" id="lena-count" tabindex="0">0</div>
+          <button class="bump-btn" id="bump-lena">🍽️ +1 f&uuml;r Lena</button>
+          <p class="press-hint">Lang dr&uuml;cken zieht 1 Punkt ab.</p>
         </div>
         <div class="score-card jojo" id="jojo-card">
           <div class="avatar">J</div>
           <div class="name">Jojo</div>
-          <div class="count" id="jojo-count">0</div>
-          <button class="bump-btn" id="bump-jojo">🍽️ +1 für Jojo</button>
+          <div class="count" id="jojo-count" tabindex="0">0</div>
+          <button class="bump-btn" id="bump-jojo">🍽️ +1 f&uuml;r Jojo</button>
+          <p class="press-hint">Lang dr&uuml;cken zieht 1 Punkt ab.</p>
         </div>
       </section>
 
-
-      <!-- Actions -->
       <section class="actions">
         <button class="action-btn pink" id="oracle-btn">🔮 Schicksal befragen</button>
         <button class="action-btn" id="motivate-btn">✨ Motivation</button>
       </section>
-    </main>
 
+      <section class="kitchen-section" aria-labelledby="kitchen-title">
+        <div class="section-head">
+          <div>
+            <p class="section-kicker">Sekund&auml;re Funktion</p>
+            <h2 id="kitchen-title">K&uuml;chen- & Wochenendplan</h2>
+          </div>
+          <button class="icon-action" id="edit-weekend-btn" aria-label="Wochenendaufgaben bearbeiten" title="Wochenendaufgaben bearbeiten">✎</button>
+        </div>
+
+        <div class="color-dock" id="color-dock"></div>
+
+        <div class="week-calendar" id="week-calendar"></div>
+
+        <div class="today-panel" id="today-panel">
+          <div>
+            <p class="today-label">Heute</p>
+            <div class="today-title-row">
+              <h3 id="today-title">K&uuml;chendienst</h3>
+              <span class="done-check" id="today-done-check" aria-label="Erledigt">✓</span>
+            </div>
+            <span id="today-status">Noch offen</span>
+          </div>
+          <button class="done-btn" id="today-done-btn">Heute abhaken</button>
+        </div>
+
+        <div class="mini-board">
+          <h3>K&uuml;chen-Leaderboard</h3>
+          <div id="kitchen-leaderboard"></div>
+        </div>
+
+        <div class="weekend-block" id="weekend-block">
+          <div class="weekend-head">
+            <div>
+              <p class="section-kicker">Wochenende</p>
+              <h3>🔒Aufgabenpakete</h3>
+            </div>
+            <span id="weekend-state-pill">Unter der Woche</span>
+          </div>
+          <div class="weekend-grid" id="weekend-grid"></div>
+          <button class="accordion-btn" id="weekend-board-toggle" aria-expanded="false">Leaderboard aufklappen</button>
+          <div class="weekend-leaderboards" id="weekend-leaderboards" hidden>
+            <div>
+              <h4>Dieses Wochenende</h4>
+              <div id="current-weekend-board"></div>
+            </div>
+            <div>
+              <h4>Alle gesamt</h4>
+              <div id="all-weekend-board"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
 
     <footer>
       <span class="save-dot" id="save-dot"></span>
@@ -81,27 +127,37 @@
     </footer>
   </div>
 
-
-  <!-- Oracle overlay -->
   <div class="oracle-overlay" id="oracle-overlay">
     <div class="oracle-card">
-      <button class="oracle-close" id="oracle-close" aria-label="Schließen">✕</button>
-      <div class="oracle-status" id="oracle-status">Stricherl werden gezählt …</div>
+      <button class="oracle-close" id="oracle-close" aria-label="Schlie&szlig;en">×</button>
+      <div class="oracle-status" id="oracle-status">Stricherl werden gez&auml;hlt ...</div>
       <div class="oracle-result" id="oracle-result"></div>
       <div class="oracle-confetti" id="oracle-confetti"></div>
     </div>
   </div>
 
-
-  <!-- Quote toast -->
   <div class="quote-toast" id="quote-toast">
     <p id="quote-text"></p>
-    <button class="quote-close" id="quote-close" aria-label="Schließen">✕</button>
+    <button class="quote-close" id="quote-close" aria-label="Schlie&szlig;en">×</button>
   </div>
 
+  <div class="edit-overlay" id="edit-overlay">
+    <div class="edit-card">
+      <div class="edit-head">
+        <div>
+          <p class="section-kicker">Bearbeiten</p>
+          <h3>Wochenendaufgaben</h3>
+        </div>
+        <button class="oracle-close" id="edit-close" aria-label="Schlie&szlig;en">×</button>
+      </div>
+      <div id="edit-list"></div>
+      <div class="edit-actions">
+        <button class="action-btn" id="edit-reset-btn">Zur&uuml;cksetzen</button>
+        <button class="action-btn pink" id="edit-save-btn">Speichern</button>
+      </div>
+    </div>
+  </div>
 
 <script type="module" src="script.js"></script>
 </body>
 </html>
-
-
