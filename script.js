@@ -6,6 +6,7 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
   const TABLE_NAME = 'try1';
   const STORAGE_KEY = 'dishwasher_tally_v1';
   const FAMILY_STORAGE_KEY = 'family_chores_extra_v1';
+  const APP_TIME_ZONE = 'Europe/Vienna';
 
   const PEOPLE = [
     { id: 'papa', name: 'Papa', initial: 'P', defaultColor: '#ffb020' },
@@ -18,6 +19,7 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
   const state = { lena: 0, jojo: 0 };
   const familyState = createDefaultFamilyState();
   const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  let countdownTimer = null;
 
   const els = {
     loading: document.getElementById('loading'),
@@ -294,12 +296,17 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
   }
 
   function renderWeekend() {
-    const weekend = isWeekend(new Date());
-    const key = getWeekendKey(new Date());
+    const now = new Date();
+    const weekendInfo = getWeekendInfo(now);
+    const weekend = weekendInfo.isWeekend;
+    const key = getWeekendKey(now);
     const completions = familyState.weekendCompletions[key] ?? {};
 
     els.weekendBlock.classList.toggle('active-weekend', weekend);
-    els.weekendStatePill.textContent = weekend ? 'Jetzt bunt & aktiv' : 'Wird nächstes Wochenende freigeschaltet';
+    els.weekendBlock.classList.toggle('locked-weekend', !weekend);
+    els.weekendGrid.inert = !weekend;
+    els.weekendGrid.setAttribute('aria-disabled', String(!weekend));
+    updateWeekendCountdown(now);
 
     els.weekendGrid.innerHTML = PEOPLE.map(person => {
       const tasks = familyState.weekendTasks[person.id] ?? [];
@@ -314,7 +321,7 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
             </div>
           </div>
           <ul>${tasks.map(task => `<li>${escapeHtml(task)}</li>`).join('')}</ul>
-          <button class="package-btn" data-weekend-done="${person.id}" ${!weekend || completedAt ? 'disabled' : ''}>
+          <button class="package-btn" data-weekend-done="${person.id}" aria-disabled="${!weekend || Boolean(completedAt)}" ${!weekend || completedAt ? 'disabled' : ''}>
             ${completedAt ? `Erledigt um ${formatTime(completedAt)}` : 'Paket abhaken'}
           </button>
         </article>
@@ -538,22 +545,106 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
     return `${year}-${month}-${day}`;
   }
 
+  function getViennaParts(date) {
+    const dateParts = new Intl.DateTimeFormat('en-CA', {
+      timeZone: APP_TIME_ZONE,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).formatToParts(date);
+    const timeParts = new Intl.DateTimeFormat('en-GB', {
+      timeZone: APP_TIME_ZONE,
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hourCycle: 'h23',
+    }).formatToParts(date);
+    const byType = Object.fromEntries([...dateParts, ...timeParts].map(part => [part.type, part.value]));
+    const year = Number(byType.year);
+    const month = Number(byType.month);
+    const day = Number(byType.day);
+    return {
+      year,
+      month,
+      day,
+      weekday: new Date(Date.UTC(year, month - 1, day)).getUTCDay(),
+      hour: Number(byType.hour),
+      minute: Number(byType.minute),
+      second: Number(byType.second),
+    };
+  }
+
+  function getViennaDateKey(date) {
+    const parts = getViennaParts(date);
+    return [
+      parts.year,
+      String(parts.month).padStart(2, '0'),
+      String(parts.day).padStart(2, '0'),
+    ].join('-');
+  }
+
+  function getViennaStartMs(year, month, day) {
+    let guess = Date.UTC(year, month - 1, day, 0, 0, 0);
+    for (let i = 0; i < 4; i++) {
+      const parts = getViennaParts(new Date(guess));
+      const targetUtc = Date.UTC(year, month - 1, day, 0, 0, 0);
+      const seenUtc = Date.UTC(parts.year, parts.month - 1, parts.day, parts.hour, parts.minute, parts.second);
+      guess += targetUtc - seenUtc;
+    }
+    return guess;
+  }
+
+  function getNextViennaSaturdayStartMs(date) {
+    const parts = getViennaParts(date);
+    const diffToSaturday = (6 - parts.weekday + 7) % 7;
+    const target = new Date(Date.UTC(parts.year, parts.month - 1, parts.day + diffToSaturday, 12, 0, 0));
+    const targetParts = getViennaParts(target);
+    return getViennaStartMs(targetParts.year, targetParts.month, targetParts.day);
+  }
+
   function isWeekend(date) {
-    return date.getDay() === 0 || date.getDay() === 6;
+    return getWeekendInfo(date).isWeekend;
+  }
+
+  function getWeekendInfo(date) {
+    const parts = getViennaParts(date);
+    return {
+      ...parts,
+      isWeekend: parts.weekday === 0 || parts.weekday === 6,
+    };
   }
 
   function getWeekendKey(date) {
-    const copy = new Date(date);
-    const day = copy.getDay();
-    const diffToSaturday = day === 0 ? -1 : 6 - day;
-    copy.setDate(copy.getDate() + diffToSaturday);
-    copy.setHours(0, 0, 0, 0);
-    return getDateKey(copy);
+    const parts = getViennaParts(date);
+    const diffToSaturday = parts.weekday === 0 ? -1 : 6 - parts.weekday;
+    const saturday = new Date(Date.UTC(parts.year, parts.month - 1, parts.day + diffToSaturday, 12, 0, 0));
+    return getViennaDateKey(saturday);
   }
 
   function getWeekendStartMs(key) {
     const [year, month, day] = key.split('-').map(Number);
-    return new Date(year, month - 1, day, 0, 0, 0, 0).getTime();
+    return getViennaStartMs(year, month, day);
+  }
+
+  function updateWeekendCountdown(now = new Date()) {
+    const weekendInfo = getWeekendInfo(now);
+    if (weekendInfo.isWeekend) {
+      els.weekendStatePill.hidden = true;
+      els.weekendStatePill.textContent = '';
+      return;
+    }
+
+    const distance = Math.max(0, getNextViennaSaturdayStartMs(now) - now.getTime());
+    els.weekendStatePill.hidden = false;
+    els.weekendStatePill.textContent = `Freigeschaltet in: ${formatCountdown(distance)}`;
+  }
+
+  function formatCountdown(ms) {
+    const totalSeconds = Math.floor(ms / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    return `${hours}h ${String(minutes).padStart(2, '0')}min ${String(seconds).padStart(2, '0')}sec`;
   }
 
   function formatTime(timestamp) {
@@ -598,7 +689,8 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 
   function maybeSendHalfWeekendReminder() {
     const now = new Date();
-    if (now.getDay() !== 0 || now.getHours() < 12) return;
+    const parts = getViennaParts(now);
+    if (parts.weekday !== 0 || parts.hour < 12) return;
     const key = getWeekendKey(now);
     if (familyState.notifiedHalfDone[key]) return;
     const completed = familyState.weekendCompletions[key] ?? {};
@@ -724,6 +816,11 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
     els.weekendBoardToggle.setAttribute('aria-expanded', String(shouldOpen));
     els.weekendBoardToggle.textContent = shouldOpen ? 'Leaderboard zuklappen' : 'Leaderboard aufklappen';
   });
+
+  els.weekendLeaderboards.hidden = true;
+  els.weekendBoardToggle.setAttribute('aria-expanded', 'false');
+  els.weekendBoardToggle.textContent = 'Leaderboard aufklappen';
+  countdownTimer = setInterval(updateWeekendCountdown, 1000);
 
   document.getElementById('edit-weekend-btn').addEventListener('click', openEditModal);
   document.getElementById('edit-close').addEventListener('click', closeEditModal);

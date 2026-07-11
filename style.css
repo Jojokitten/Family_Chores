@@ -16,7 +16,7 @@
   --orange:#ff8f43;
   --lena-grad:linear-gradient(135deg, var(--blue), var(--violet));
   --jojo-grad:linear-gradient(135deg, var(--pink), var(--pink-soft));
-  --rainbow-grad:linear-gradient(90deg, var(--blue), var(--green), var(--yellow), var(--pink), var(--violet));
+  --rainbow-grad:linear-gradient(90deg, var(--blue), var(--green), var(--yellow), #f58dcd , var(--pink), var(--violet), var(--blue));
   --radius-lg:26px;
   --radius-md:18px;
 }
@@ -351,6 +351,8 @@ button:focus-visible, .count:focus-visible, input:focus-visible{
 
 .weekend-block{filter:grayscale(1); opacity:.7; transition:filter .25s ease, opacity .25s ease;}
 .weekend-block.active-weekend{filter:none; opacity:1;}
+.weekend-block.locked-weekend .weekend-grid{pointer-events:none;}
+.weekend-block.locked-weekend .weekend-card{opacity:.72;}
 .weekend-head{margin-bottom:14px;}
 #weekend-state-pill{
   flex:0 0 auto;
@@ -383,7 +385,9 @@ button:focus-visible, .count:focus-visible, input:focus-visible{
 .weekend-leaderboards{
   display:grid; grid-template-columns:1fr; gap:12px; margin-top:14px;
 }
+.weekend-leaderboards[hidden]{display:none;}
 @media (min-width:760px){.weekend-leaderboards{grid-template-columns:1fr 1fr;}}
+#weekend-state-pill[hidden]{display:none;}
 .weekend-leaderboards > div{
   background:rgba(0,0,0,.18); border:1px solid rgba(255,255,255,.08); border-radius:16px; padding:12px;
 }
