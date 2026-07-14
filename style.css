@@ -109,7 +109,7 @@ button:focus-visible, .count:focus-visible, input:focus-visible{
   filter:blur(70px); opacity:.26; animation:rotate 18s linear infinite; z-index:0;
 }
 .hero > *{position:relative; z-index:1;}
-.eyebrow,.section-kicker{
+.eyebrow{
   margin:0;
   text-transform:uppercase; letter-spacing:.12em; font-size:.73rem;
   color:var(--text-dim); font-weight:800;
@@ -280,7 +280,7 @@ button:focus-visible, .count:focus-visible, input:focus-visible{
   box-shadow:0 0 0 2px color-mix(in srgb, var(--person-color) 28%, transparent), 0 16px 32px rgba(0,0,0,.28);
 }
 .day-card.done{background:linear-gradient(180deg, color-mix(in srgb, var(--person-color) 18%, transparent), rgba(255,255,255,.035));}
-.day-top{display:flex; justify-content:space-between; align-items:center; color:var(--text-dim); font-size:.78rem; font-weight:800;}
+.day-top{display:flex; justify-content:space-between; align-items:center; color:var(--text-dim); font-size:.80rem; font-weight:800;}
 .day-top b{
   color:#101015; background:var(--person-color); border-radius:999px; padding:3px 7px;
 }
@@ -357,7 +357,7 @@ button:focus-visible, .count:focus-visible, input:focus-visible{
 #weekend-state-pill{
   flex:0 0 auto;
   padding:8px 10px; border-radius:999px;
-  background:rgba(255,255,255,.08); color:var(--text-dim); font-size:.78rem; font-weight:900;
+  background:rgba(255,255,255,.08);  font-size:1.60rem; font-weight:900;
 }
 .active-weekend #weekend-state-pill{background:var(--rainbow-grad); color:#101015;}
 .weekend-grid{display:grid; grid-template-columns:1fr; gap:12px;}
