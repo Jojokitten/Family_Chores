@@ -264,7 +264,8 @@ button:focus-visible, .count:focus-visible, input:focus-visible{
 .day-card{
   position:relative;
   min-height:190px;
-  border-radius:18px;
+  
+  border-radius:5px;
   padding:13px;
   border:1px solid rgba(255,255,255,.1);
   background:linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.025));

@@ -20,6 +20,7 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
   const familyState = createDefaultFamilyState();
   const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   let countdownTimer = null;
+  
 
   const els = {
     loading: document.getElementById('loading'),
@@ -62,7 +63,7 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
   function createDefaultFamilyState() {
     return {
       colors: { papa: '#ffb020', lena: '#3dc8ff', jojo: '#ff4f9a' },
-      kitchenSchedule: ['papa', 'lena', 'jojo', 'papa', 'lena', 'jojo', 'papa'],
+      kitchenSchedule: ['papa', 'papa', 'jojo', 'jojo', 'lena', 'lena', 'papa'],
       kitchenDone: {},
       weekendTasks: {
         papa: ['Kochen', 'Klo putzen'],
@@ -443,6 +444,8 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
     familyState.kitchenDone[getDateKey(new Date())] = assignedId;
     saveFamilyState();
     renderFamily();
+
+
   }
 
   function completeWeekendPackage(personId) {
@@ -791,7 +794,30 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
   document.getElementById('motivate-btn').addEventListener('click', showQuote);
   document.getElementById('quote-close').addEventListener('click', hideQuote);
 
-  els.todayDoneBtn.addEventListener('click', markTodayKitchenDone);
+  els.todayDoneBtn.addEventListener('click', () => {
+    markTodayKitchenDone();
+
+
+  
+els.todayDoneBtn.addEventListener('click', async (event) => {
+ 
+  markTodayKitchenDone();
+
+  const { data, error } = await supabase
+    .from('try1') 
+    .insert([
+      { kitchen_done: true } 
+    ]);
+
+  if (error) {
+    console.error("Fehler beim Speichern in Supabase:", error.message);
+  } else {
+    console.log("Erfolgreich in Supabase gespeichert!");
+  }
+});
+  });
+
+  
   els.weekCalendar.addEventListener('click', (event) => {
     const button = event.target.closest('[data-assign-person]');
     if (!button) return;
