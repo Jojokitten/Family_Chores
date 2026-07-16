@@ -358,7 +358,8 @@ button:focus-visible, .count:focus-visible, input:focus-visible{
 #weekend-state-pill{
   flex:0 0 auto;
   padding:8px 10px; border-radius:999px;
-  background:rgba(255,255,255,.08);  font-size:1.60rem; font-weight:900;
+  background:rgba(255,255,255,.08);  font-size:1.20rem; font-weight:900;
+  margin-right:100px
 }
 .active-weekend #weekend-state-pill{background:var(--rainbow-grad); color:#101015;}
 .weekend-grid{display:grid; grid-template-columns:1fr; gap:12px;}

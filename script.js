@@ -1,9 +1,9 @@
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
-
+//hii
 (() => {
   const SUPABASE_URL = 'https://cxlkzxpstlekcwscnsom.supabase.co';
   const SUPABASE_ANON_KEY = 'sb_publishable_PNQ9q1pwf3wi5fZjW3nOQg_87cWiEc1';
-  const TABLE_NAME = 'try1';
+  const TABLE_NAME = 'Geschirrspuhler';
   const STORAGE_KEY = 'dishwasher_tally_v1';
   const FAMILY_STORAGE_KEY = 'family_chores_extra_v1';
   const APP_TIME_ZONE = 'Europe/Vienna';
@@ -281,7 +281,7 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 
     els.todayPanel.style.setProperty('--person-color', getColor(assignedId));
     els.todayTitle.textContent = `${assigned.name} hat heute Küchendienst`;
-    els.todayStatus.textContent = isDone ? 'Erledigt - sauber abgehakt.' : `${DAY_NAMES[todayIndex]} ist noch offen.`;
+    els.todayStatus.textContent = isDone ? 'Erledigt...100 Punkte für Griffindor!' : `${DAY_NAMES[todayIndex]} ist noch offen.`;
     els.todayDoneCheck.classList.toggle('show', isDone);
     els.todayDoneBtn.textContent = isDone ? 'Heute erledigt' : 'Heute abhaken';
     els.todayDoneBtn.disabled = isDone;
@@ -444,7 +444,7 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
     familyState.kitchenDone[getDateKey(new Date())] = assignedId;
     saveFamilyState();
     renderFamily();
-
+  
 
   }
 
@@ -794,20 +794,16 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
   document.getElementById('motivate-btn').addEventListener('click', showQuote);
   document.getElementById('quote-close').addEventListener('click', hideQuote);
 
-  els.todayDoneBtn.addEventListener('click', () => {
-    markTodayKitchenDone();
-
 
   
 els.todayDoneBtn.addEventListener('click', async (event) => {
- 
   markTodayKitchenDone();
-
+  
+//hii
   const { data, error } = await supabase
-    .from('try1') 
-    .insert([
-      { kitchen_done: true } 
-    ]);
+    .from('kitchen') 
+    .update({ kitchen_done: true })
+    .eq('id', 1);
 
   if (error) {
     console.error("Fehler beim Speichern in Supabase:", error.message);
@@ -815,7 +811,6 @@ els.todayDoneBtn.addEventListener('click', async (event) => {
     console.log("Erfolgreich in Supabase gespeichert!");
   }
 });
-  });
 
   
   els.weekCalendar.addEventListener('click', (event) => {
